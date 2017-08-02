@@ -35,8 +35,6 @@ int satellites;
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
 
-static void smartdelay(unsigned long ms);
-
 static void smartdelay(unsigned long ms)
 {
   unsigned long start = millis();

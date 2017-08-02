@@ -1,79 +1,76 @@
 #include <SPI.h>
 #include <LoRa.h>
-#include <TinyGPS++.h>
+#include <TinyGPS.h>
 #include <SoftwareSerial.h>
-#include <stdint.h>
 
-SoftwareSerial ss(4, 3);
+float flat, flon, alti;
+unsigned long age;
+int satellites;
 
-TinyGPSPlus gps;
+TinyGPS gps;
+SoftwareSerial ss(3, 4); // Arduino RX, TX , 
+
 void setup() {
   
-  Serial.begin(9600);                             // starting serial, will be used for gps
-  ss.begin(4800);
+  Serial.begin(9600);  // Serial to print out GPS info in Arduino IDE
+  ss.begin(9600); // SoftSerial port to get GPS data. 
 
   if (!LoRa.begin(866E6)) {                       // starting LoRa at 868Mhz
     Serial.println("Starting LoRa failed!");      // did not start 
     while (1);                                    // put debug here, led or display
   }
-  
+
+   smartdelay(2000);
 }
 
-
-
-void loop() {
-  
-  while (ss.available() > 0)
-    if (gps.encode(ss.read()))
-      displayInfo();
-
-  
-  /*bool newData = false;
-  unsigned long chars;
-  unsigned short sentences, failed;
-
-  for (unsigned long start = millis(); millis() - start < 1000;)
+static void smartdelay(unsigned long ms)
+{
+  unsigned long start = millis();
+  do 
   {
     while (ss.available())
     {
-      char c = ss.read();
-      // Serial.write(c); // uncomment this line if you want to see the GPS data flowing
-      if (gps.encode(c)) // Did a new valid sentence come in?
-        newData = true;
+      //ss.print(Serial.read());
+      gps.encode(ss.read());
     }
-  }
+  } while (millis() - start < ms);
+}
 
-  if (newData)
-  {
-    float flat, flon;
-    unsigned long age;
+void loop() {
+    satellites = gps.satellites();
     
-    gps.f_get_position(&flat, &flon, &age);
-    send_gps(flat,flon);
-  } 
+    Serial.print(satellites);
+    Serial.print("-");
+    
+    if(satellites != 0) {
+      gps.f_get_position(&flat, &flon, &age);
+      
+      Serial.print(flat);
+      Serial.print("-");
+      Serial.print(flon);
+      
+      alti = gps.f_altitude();
   
-  gps.stats(&chars, &sentences, &failed);
-  lora_send_num(failed);*/
+      send_gps(flat, flon, alti);
+    } else {
+      Serial.print("Nothing to see here");
+      
+      lora_send_string("nothing");
+    }
+    Serial.println();
+    smartdelay(1000);
     
 }
 
-void displayInfo() {
-  if (gps.location.isValid())
-  {
-    send_gps(gps.location.lat(), gps.location.lng());
-  }
-  else
-  {
-    lora_send_string("Error code 2");
-  }
-}
 
-void send_gps(float lat, float lon) {
+void send_gps(float lat, float lon, float alti) {
   LoRa.beginPacket();
   LoRa.print('a');
   LoRa.print(lat * 10000);
   LoRa.print('o');
   LoRa.print(lon * 10000);
+  LoRa.print('t');
+  LoRa.print(alti * 10000);
   LoRa.endPacket();
 }
 
