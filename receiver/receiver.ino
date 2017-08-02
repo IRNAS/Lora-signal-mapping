@@ -6,7 +6,7 @@
 #include <Wire.h>
 #endif
 
-U8X8_SSD1306_128X32_UNIVISION_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);   // Adafruit Feather ESP8266/32u4 Boards + FeatherWing OLED
+U8X8_SSD1306_128X32_UNIVISION_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);
 
 
 void setup() {
@@ -37,12 +37,13 @@ void loop() {
  *  Description: execute when we receive a packet on LoRa. Process it and update the display
  */
 void onReceive(int packetSize) {
-  char data[packetSize];                    // local data bufffer
+  String data;                              // it can be done also with a char buffer[packetSize]
   int rssi; float snr;                      // store the rssi and snr
   
   
   for (int i = 0; i < packetSize; i++) {    // put the data into the buffer
-    data[i] = (char)LoRa.read();
+   // data[i] = (char)LoRa.read();          // if you are using a buffer 
+    data += (char)LoRa.read();
     Serial.print(data[i]);
   }
 
@@ -55,16 +56,14 @@ void onReceive(int packetSize) {
   Serial.println(snr);
   Serial.println(" ");
 
-  
-
   update_display(data, rssi, snr);          // update the display
 }
 
 /*
  *  Function: void update_display(char* data, int rssi, float snr)
- *  Description: updates the display with the received data, rssi and snr
+ *  Description: updates the display with the received data, rssi and snr. If using buffer than String data must be char* data
  */
-void update_display(char* data, int rssi, float snr) {
+void update_display(String data, int rssi, float snr) {
   
   u8x8.setFont(u8x8_font_chroma48medium8_r);  
   u8x8.setCursor(0,0);
