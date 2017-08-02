@@ -1,8 +1,15 @@
 #include <SPI.h>
 #include <LoRa.h>
+#include <TinyGPS.h>
+#include <SoftwareSerial.h>
+#include <stdint.h>
+
+SoftwareSerial ss(4, 3);
+TinyGPS gps;
 
 void setup() {
   Serial.begin(9600);                             // starting serial, will be used for gps
+  ss.begin(4800);
 
   if (!LoRa.begin(866E6)) {                       // starting LoRa at 868Mhz
     Serial.println("Starting LoRa failed!");      // did not start 
@@ -11,13 +18,42 @@ void setup() {
   
 }
 
-void loop() {
-  lora_send_num(1);
-  lora_send_string("1");
-  lora_send_float(1.23);
-  delay(2000);
 
+
+void loop() {
   
+  
+  bool newData = false;
+  unsigned long chars;
+  unsigned short sentences, failed;
+
+  for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (ss.available())
+    {
+      char c = ss.read();
+      // Serial.write(c); // uncomment this line if you want to see the GPS data flowing
+      if (gps.encode(c)) // Did a new valid sentence come in?
+        newData = true;
+    }
+  }
+
+  if (newData)
+  {
+    float flat, flon;
+    unsigned long age;
+    gps.f_get_position(&flat, &flon, &age);
+    send_gps(flat, flon);
+  }
+}
+
+void send_gps(float lat, float lon) {
+  LoRa.beginPacket();
+  LoRa.print('a');
+  LoRa.print(lat * 10000);
+  LoRa.print('o');
+  LoRa.print(lon * 10000);
+  LoRa.endPacket();
 }
 
 /*
