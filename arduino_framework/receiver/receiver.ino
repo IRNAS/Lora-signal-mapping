@@ -38,7 +38,8 @@ void loop() {
  */
 void onReceive(int packetSize) {
   char data[packetSize];                                              // packet data
-  float lat, lon; int rssi; float snr;                                // store the rssi and snr
+  float lat, lon, alti;                                               // latitude, longitude and altitude
+  int rssi; float snr;                                                // rssi and snr
   
   for (int i = 0; i < packetSize; i++) {                  
     data[i] =  ((char)LoRa.read());                                   // put the data into the buffer
@@ -49,25 +50,25 @@ void onReceive(int packetSize) {
   // if everythin is okay
   if(data[0] == 'a' && data[10] == 'o') {
     
-    char lat_char[10]; char lon_char[10];                             // create local char arrays
-    for(int i=1;i<10;i++)           { lat_char[i - 1] = data[i]; }    // write it into the local arrays
-    for(int i=11;i<packetSize;i++)  {lon_char[i - 11] = data[i]; }    // write it into the local arrays
+    char lat_char[10]; char lon_char[10]; char alti_char[10];                                   // create local char arrays
+    
+    for(int i=1;i<10;i++)           { lat_char[i - 1]   = data[i];}                             // write it into the local arrays
+    for(int i=11;i<20;i++)          { lon_char[i - 11]  = data[i];}                             // write it into the local arrays
+    for(int i=20;i<packetSize; i++) { alti_char[i - 20] = data[i]; }                            // write into the local arrays
 
-    lat = (float)atof(lat_char);                                      // convert it to float
-    lon = (float)atof(lon_char);                                      // convert it to float
+    lat = (float)atof(lat_char); lon = (float)atof(lon_char); alti = (float)atof(alti_char);    // convert it to float
 
-    lat = lat / 10000;                                                // divide it 
-    lon = lon / 10000;                                                // divide it
+    lat = lat / 10000; lon = lon / 10000; alti = alti / 10000;                                  // divide it
 
     // debug printing with 10 decimal points
     Serial.println(lat, 10);                                        
     Serial.println(lon, 10);
 
     
-    rssi = LoRa.packetRssi();                                         // get rssi 
-    snr  = LoRa.packetSnr();                                          // get snr
+    rssi = LoRa.packetRssi();                                                                   // get rssi 
+    snr  = LoRa.packetSnr();                                                                    // get snr
     
-    update_display(lat, lon, rssi, snr);                              // update the display
+    update_display(lat, lon, rssi, snr);                                                        // update the display
     
   } else {
     u8x8.clear();
@@ -92,6 +93,8 @@ void update_display(float lat, float lon, int rssi, float snr) {
   u8x8.print("Lat: "); u8x8.print(lat, 5);
   u8x8.setCursor(0,1);
   u8x8.print("Lon: "); u8x8.print(lon, 5);
+  u8x8.setCursor(0,2);
+  u8x8.print("Alti: "); u8x8.print(alti, 5);
   
   u8x8.setFont(u8x8_font_5x7_f); 
   u8x8.setCursor(0,3);
