@@ -37,38 +37,58 @@ void loop() {
  *  Description: execute when we receive a packet on LoRa. Process it and update the display
  */
 void onReceive(int packetSize) {
-  String data;                              // it can be done also with a char buffer[packetSize]
+  char data[packetSize];
   int rssi; float snr;                      // store the rssi and snr
-  
+  char *token; int token_counter = 0;
   
   for (int i = 0; i < packetSize; i++) {    // put the data into the buffer
-   // data[i] = (char)LoRa.read();          // if you are using a buffer 
-    data += (char)LoRa.read();
-    Serial.print(data[i]);
+    data[i] =  ((char)LoRa.read());
+    //Serial.println("----");
+    
   }
 
-  Serial.println(" ");
+  float lat, lon;
 
-  rssi = LoRa.packetRssi();                 // get rssi
-  snr  = LoRa.packetSnr();                  // get snr
+  if(data[0] == 'a' && data[10] == 'o') {
+    char lat_char[10]; char lon_char[10];
+    for(int i=1;i<10;i++)           { lat_char[i - 1] = data[i]; }
+    for(int i=11;i<packetSize;i++)  {lon_char[i - 11] = data[i]; }
 
-  Serial.println(rssi);
-  Serial.println(snr);
-  Serial.println(" ");
+    lat = (float)atof(lat_char);
+    lon = (float)atof(lon_char);
 
-  update_display(data, rssi, snr);          // update the display
+    lat = lat / 10000;
+    lon = lon / 10000;
+
+    Serial.println(lat, 10);
+    Serial.println(lon, 10);
+
+    
+    rssi = LoRa.packetRssi();                 // get rssi
+    snr  = LoRa.packetSnr();                  // get snr
+    
+    update_display(lat, lon, rssi, snr);          // update the display
+  } else {
+    
+  }
+
+
+
+
 }
 
 /*
  *  Function: void update_display(char* data, int rssi, float snr)
  *  Description: updates the display with the received data, rssi and snr. If using buffer than String data must be char* data
  */
-void update_display(String data, int rssi, float snr) {
+void update_display(float lat, float lon, int rssi, float snr) {
   
   u8x8.setFont(u8x8_font_chroma48medium8_r);  
   u8x8.setCursor(0,0);
   u8x8.clear();
-  u8x8.print(data);
+  u8x8.print("Lat: "); u8x8.print(lat, 5);
+  u8x8.setCursor(0,1);
+  u8x8.print("Lon: "); u8x8.print(lon, 5);
   
   u8x8.setFont(u8x8_font_5x7_f); 
   u8x8.setCursor(0,3);
