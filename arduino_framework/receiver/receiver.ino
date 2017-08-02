@@ -6,23 +6,23 @@
 #include <Wire.h>
 #endif
 
-U8X8_SSD1306_128X32_UNIVISION_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);
+U8X8_SSD1306_128X32_UNIVISION_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);                             // setup the fancy display
 
 
 void setup() {
-  Serial.begin(9600);                         // serial for debugging
-  while (!Serial);                            // waiting for serial
+  Serial.begin(9600);                                                                           // serial for debugging
+  while (!Serial);                                                                              // waiting for serial
 
-  Serial.println("LoRa Receiver");            // print welcome message
+  Serial.println("LoRa Receiver");                                                              // print welcome message
   
-  if (!LoRa.begin(866E6)) {                   // LoRa setup at 868MHz
-    Serial.println("Starting LoRa failed!");  // failed
-    while (1);                                // put some debug
+  if (!LoRa.begin(866E6)) {                                                                     // LoRa setup at 868MHz
+    Serial.println("Starting LoRa failed!");                                                    // failed
+    while (1);                                                                                  // put some debug
   }
 
-  LoRa.onReceive(onReceive);                  // execute on receive onReceive
+  LoRa.onReceive(onReceive);                                                                    // execute on receive onReceive
 
-  LoRa.receive();                             // put the radio into receive mode
+  LoRa.receive();                                                                               // put the radio into receive mode
   
   u8x8.begin();
 
