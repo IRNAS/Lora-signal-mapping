@@ -37,18 +37,18 @@ void loop() {
  *  Description: execute when we receive a packet on LoRa. Process it and update the display
  */
 void onReceive(int packetSize) {
-  char data[packetSize];                                              // packet data
-  float lat, lon, alti;                                               // latitude, longitude and altitude
-  int rssi; float snr;                                                // rssi and snr
+  char data[packetSize];                                                                        // packet data
+  float lat, lon, alti;                                                                         // latitude, longitude and altitude
+  int rssi; float snr;                                                                          // rssi and snr
   
   for (int i = 0; i < packetSize; i++) {                  
-    data[i] =  ((char)LoRa.read());                                   // put the data into the buffer
+    data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
     //Serial.println("----");
     
   }
 
   // if everythin is okay
-  if(data[0] == 'a' && data[10] == 'o') {
+  if(data[0] == 'a' && data[10] == 'o' && data[20] == 't') {
     
     char lat_char[10]; char lon_char[10]; char alti_char[10];                                   // create local char arrays
     
@@ -71,11 +71,11 @@ void onReceive(int packetSize) {
     update_display(lat, lon, rssi, snr);                                                        // update the display
     
   } else {
-    u8x8.clear();
-    u8x8.setFont(u8x8_font_chroma48medium8_r);  
-    u8x8.setCursor(0,0);
-    u8x8.print("NO DATA");
-    for(int i=0; i < packetSize; i++ ){ 
+    u8x8.clear();                                                                               // clear the display
+    u8x8.setFont(u8x8_font_chroma48medium8_r);                                                  // set medium font  
+    u8x8.setCursor(0,0);                                                                        // cursor at the beginning
+    u8x8.print("NO DATA");                                                                      // NO DATA MAN!
+    for(int i=0; i < packetSize; i++ ){                                                         // debug received data
       Serial.print(data[i]);
     }
   }
@@ -87,22 +87,26 @@ void onReceive(int packetSize) {
  */
 void update_display(float lat, float lon, int rssi, float snr) {
   
-  u8x8.setFont(u8x8_font_chroma48medium8_r);  
-  u8x8.setCursor(0,0);
-  u8x8.clear();
-  u8x8.print("Lat: "); u8x8.print(lat, 5);
-  u8x8.setCursor(0,1);
-  u8x8.print("Lon: "); u8x8.print(lon, 5);
-  u8x8.setCursor(0,2);
-  u8x8.print("Alti: "); u8x8.print(alti, 5);
+  u8x8.setFont(u8x8_font_chroma48medium8_r);                                                    // set font                                                                       
+  u8x8.clear();                                                                                 // clear the display
   
-  u8x8.setFont(u8x8_font_5x7_f); 
-  u8x8.setCursor(0,3);
+  u8x8.setCursor(0,0);                                                                          // set cursor on the first row
+  u8x8.print("Lat: "); u8x8.print(lat, 5);                                                      // print latitude
+    
+  u8x8.setCursor(0,1);                                                                          // set cursor on the second row
+  u8x8.print("Lon: "); u8x8.print(lon, 5);                                                      // print longitude
+  
+  u8x8.setCursor(0,2);                                                                          // set cursor on the third row
+  u8x8.print("Alti: "); u8x8.print(alti, 5);                                                    // print altitude
+  
+  u8x8.setFont(u8x8_font_5x7_f);                                                                // set smaller font
+  
+  u8x8.setCursor(0,3);                                                                          // set cursor on the fourth row
   u8x8.print("R: ");
-  u8x8.print(rssi);
+  u8x8.print(rssi);                                                                             // print rssi
   u8x8.print(" ");
   u8x8.print("S: ");
-  u8x8.print(snr);
+  u8x8.print(snr);                                                                              // print snr
 }
 
 
