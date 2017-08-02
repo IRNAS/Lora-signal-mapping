@@ -1,6 +1,7 @@
 # LoRa
 Communication between LoRa and mapping
 
+---
 All projects of Institute IRNAS are as usefully open-source as possible.
 
 Hardware including documentation is licensed under CERN OHL v.1.2. license <http://www.ohwr.org/licenses/cern-ohl/v1.2>.
