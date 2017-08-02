@@ -1,12 +1,12 @@
 #include <SPI.h>
 #include <LoRa.h>
-#include <TinyGPS.h>
+#include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <stdint.h>
 
 SoftwareSerial ss(4, 3);
 
-  TinyGPS gps;
+TinyGPSPlus gps;
 void setup() {
   
   Serial.begin(9600);                             // starting serial, will be used for gps
@@ -23,8 +23,12 @@ void setup() {
 
 void loop() {
   
+  while (ss.available() > 0)
+    if (gps.encode(ss.read()))
+      displayInfo();
+
   
-  bool newData = false;
+  /*bool newData = false;
   unsigned long chars;
   unsigned short sentences, failed;
 
@@ -43,10 +47,24 @@ void loop() {
   {
     float flat, flon;
     unsigned long age;
+    
     gps.f_get_position(&flat, &flon, &age);
-    send_gps(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon);
-  } else {
-    lora_send_string("nothing");
+    send_gps(flat,flon);
+  } 
+  
+  gps.stats(&chars, &sentences, &failed);
+  lora_send_num(failed);*/
+    
+}
+
+void displayInfo() {
+  if (gps.location.isValid())
+  {
+    send_gps(gps.location.lat(), gps.location.lng());
+  }
+  else
+  {
+    lora_send_string("Error code 2");
   }
 }
 

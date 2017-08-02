@@ -74,6 +74,9 @@ void onReceive(int packetSize) {
     u8x8.setFont(u8x8_font_chroma48medium8_r);  
     u8x8.setCursor(0,0);
     u8x8.print("NO DATA");
+    for(int i=0; i < packetSize; i++ ){ 
+      Serial.print(data[i]);
+    }
   }
 }
 
