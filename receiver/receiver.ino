@@ -37,44 +37,42 @@ void loop() {
  *  Description: execute when we receive a packet on LoRa. Process it and update the display
  */
 void onReceive(int packetSize) {
-  char data[packetSize];
-  int rssi; float snr;                      // store the rssi and snr
-  char *token; int token_counter = 0;
+  char data[packetSize];                                              // packet data
+  float lat, lon; int rssi; float snr;                                // store the rssi and snr
   
-  for (int i = 0; i < packetSize; i++) {    // put the data into the buffer
-    data[i] =  ((char)LoRa.read());
+  for (int i = 0; i < packetSize; i++) {                  
+    data[i] =  ((char)LoRa.read());                                   // put the data into the buffer
     //Serial.println("----");
     
   }
 
-  float lat, lon;
-
+  // if everythin is okay
   if(data[0] == 'a' && data[10] == 'o') {
-    char lat_char[10]; char lon_char[10];
-    for(int i=1;i<10;i++)           { lat_char[i - 1] = data[i]; }
-    for(int i=11;i<packetSize;i++)  {lon_char[i - 11] = data[i]; }
+    char lat_char[10]; char lon_char[10];                             // create local char arrays
+    for(int i=1;i<10;i++)           { lat_char[i - 1] = data[i]; }    // write it into the local arrays
+    for(int i=11;i<packetSize;i++)  {lon_char[i - 11] = data[i]; }    // write it into the local arrays
 
-    lat = (float)atof(lat_char);
-    lon = (float)atof(lon_char);
+    lat = (float)atof(lat_char);                                      // convert it to float
+    lon = (float)atof(lon_char);                                      // convert it to float
 
-    lat = lat / 10000;
-    lon = lon / 10000;
+    lat = lat / 10000;                                                // divide it 
+    lon = lon / 10000;                                                // divide it
 
-    Serial.println(lat, 10);
+    // debug printing with 10 decimal points
+    Serial.println(lat, 10);                                        
     Serial.println(lon, 10);
 
     
-    rssi = LoRa.packetRssi();                 // get rssi
-    snr  = LoRa.packetSnr();                  // get snr
+    rssi = LoRa.packetRssi();                                         // get rssi 
+    snr  = LoRa.packetSnr();                                          // get snr
     
-    update_display(lat, lon, rssi, snr);          // update the display
+    update_display(lat, lon, rssi, snr);                              // update the display
   } else {
-    
+    u8x8.clear();
+    u8x8.setFont(u8x8_font_chroma48medium8_r);  
+    u8x8.setCursor(0,0);
+    u8x8.print("NO DATA");
   }
-
-
-
-
 }
 
 /*
