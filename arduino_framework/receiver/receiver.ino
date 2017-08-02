@@ -48,6 +48,7 @@ void onReceive(int packetSize) {
 
   // if everythin is okay
   if(data[0] == 'a' && data[10] == 'o') {
+    
     char lat_char[10]; char lon_char[10];                             // create local char arrays
     for(int i=1;i<10;i++)           { lat_char[i - 1] = data[i]; }    // write it into the local arrays
     for(int i=11;i<packetSize;i++)  {lon_char[i - 11] = data[i]; }    // write it into the local arrays
@@ -67,6 +68,7 @@ void onReceive(int packetSize) {
     snr  = LoRa.packetSnr();                                          // get snr
     
     update_display(lat, lon, rssi, snr);                              // update the display
+    
   } else {
     u8x8.clear();
     u8x8.setFont(u8x8_font_chroma48medium8_r);  

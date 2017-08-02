@@ -5,9 +5,10 @@
 #include <stdint.h>
 
 SoftwareSerial ss(4, 3);
-TinyGPS gps;
 
+  TinyGPS gps;
 void setup() {
+  
   Serial.begin(9600);                             // starting serial, will be used for gps
   ss.begin(4800);
 
@@ -43,7 +44,9 @@ void loop() {
     float flat, flon;
     unsigned long age;
     gps.f_get_position(&flat, &flon, &age);
-    send_gps(flat, flon);
+    send_gps(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon);
+  } else {
+    lora_send_string("nothing");
   }
 }
 
