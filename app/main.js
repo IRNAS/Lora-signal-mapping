@@ -1,8 +1,22 @@
 const 	electron 				= require('electron');							// electron package
 const 	{app, BrowserWindow} 	= electron;										// getting elements from electron
+var writeFile = require('write-file')
 
 var data_counter;
 var gps_data = {};
+var pushing_enabled = 1; var pushing_counter = 0;
+
+var geojson = {
+    "type": "FeatureCollection",
+    "features":[{
+        "type":"Feature",
+        "geometry":{
+            "type":"LineString",
+            "coordinates":[]
+        },
+        "properties":null
+    }]
+};
 
 const SerialPort = require('serialport');
 const Readline = SerialPort.parsers.Readline;
@@ -34,9 +48,24 @@ parser.on('data', function(in_data) {
 		data_counter = -1;
 		console.log(gps_data);
 		console.log("Ending");
+		if(pushing_enabled == 1) {
+			if(pushing_counter == 250) {
+				writeFile('test.geojson', geojson, function (err) {
+					if (err) return console.log(err)
+					console.log('file is written')
+				pushing_enabled = 0;
+				});
+			}
+			if(gps_data[0] != null && gps_data[1] != null) {
+				geojson.features[0].geometry.coordinates.push([gps_data[1], gps_data[0]]);
+			}
+			pushing_counter++;
+			console.log(pushing_counter);
+		}
+
 	} else {
 		if(data_counter != -1) {
-			gps_data[data_counter] = in_data.replace('\r', '');
+			gps_data[data_counter] = parseFloat(in_data);
 			data_counter++;
 		}
 	}
