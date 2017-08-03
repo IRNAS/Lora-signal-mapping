@@ -6,6 +6,8 @@
 float flat, flon, alti;                           // latitude, longitude and altitude for gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
+long lastSendTime = 0;        // last send time
+int interval = 500;          // interval between sends
 
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
@@ -19,8 +21,12 @@ void setup() {
     Serial.println("Starting LoRa failed!");      // did not start 
     while (1);                                    // put debug here, led or display
   }
+
+  /*LoRa.onReceive(onReceive);                      // execute on receive onReceive
+
+  LoRa.receive();                                 // put the radio into receive mode*/
   
-   smartdelay(2000);                              // wait for gps to stabalize
+  delay(2000);                                     // wait for gps to stabalize
 }
 
 /*
@@ -40,12 +46,12 @@ static void smartdelay(unsigned long ms)
   } while (millis() - start < ms);
 }
 
-void loop() {
-    satellites = gps.satellites();                  // gets the num of satellites
+void gps_loop() {
+  satellites = gps.satellites();                  // gets the num of satellites
 
     // debug stuff
-    Serial.print(satellites);
-    Serial.print("-");
+    //Serial.print(satellites);
+    //Serial.print("-");
     
     if(satellites != 0) {                           // if the satellites are not 0
       gps.f_get_position(&flat, &flon, &age);       // get position
@@ -54,6 +60,7 @@ void loop() {
       Serial.print(flat, 5);
       Serial.print("-");
       Serial.print(flon, 5);
+      Serial.println();
       
       alti = gps.f_altitude();                      // get altitude
   
@@ -64,9 +71,32 @@ void loop() {
       
       lora_send_string("nothing");  
     }
-    Serial.println();
+
     smartdelay(1000);                               // smarty delay
-    
+}
+
+
+void loop() {
+  if (millis() - lastSendTime > interval) {
+    gps_loop();
+    lastSendTime = millis();            // timestamp the message
+  }
+
+  // parse for a packet, and call onReceive with the result:
+  onReceive(LoRa.parsePacket());
+
+}
+
+void onReceive(int packetSize) {
+  char data[packetSize];                                                                        // packet data           
+
+  for (int i = 0; i < packetSize; i++) {                  
+    data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
+  }
+
+  for(int i=0; i< packetSize; i++) {
+    Serial.print(data[i]);
+  }
 }
 
 /*
