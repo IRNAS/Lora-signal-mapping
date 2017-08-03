@@ -29,20 +29,21 @@ void setup() {
 }
 
 
-long lastSendTime = 0;        // last send time
-int interval = 500;          // interval between sends
-char status_lora = 'e';       // for beginning error
+long lastSendTime = 0;            // last send time
+int interval = 500;               // interval between sends
+char status_lora = 'e';           // for beginning error
 byte onReceiveStatusCurrent = 0;
 byte onReceiveStatusPast = 0;
+int packet_size;
 
 void loop() { 
   if (millis() - lastSendTime > interval) {
-    lora_send_char(status_lora);
+    lora_send_status(status_lora);
     lastSendTime = millis();            // timestamp the message
   }
 
-  // parse for a packet, and call onReceive with the result:
-  onReceive(LoRa.parsePacket());
+    onReceive(LoRa.parsePacket());
+  
 }
 
 /*
@@ -50,6 +51,10 @@ void loop() {
  *  Description: execute when we receive a packet on LoRa. Process it and update the display
  */
 void onReceive(int packetSize) {
+  if(packetSize == 0) {
+    display_nodata();
+    return;
+  }
   char data[packetSize];                                                                        // packet data           
   float lat, lon, alti;                                                                         // latitude, longitude and altitude
   int rssi; float snr;                                                                          // rssi and                                                             
@@ -57,6 +62,11 @@ void onReceive(int packetSize) {
   for (int i = 0; i < packetSize; i++) {                  
     data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
   }
+
+  /*for(int i=0; i < packetSize; i++ ){                                                           // debug received data
+      Serial.print(data[i]);
+  }
+  Serial.println();*/
 
   // if everythin is okay
   if(data[0] == 'a' && data[10] == 'o' && data[20] == 't') {
@@ -86,19 +96,8 @@ void onReceive(int packetSize) {
     update_display(lat, lon, alti, rssi, snr);                                                  // update the display
     
   } else {
+    display_nodata();
     
-    status_lora = 'e';
-    
-    onReceiveStatusCurrent = 1;
-    if(onReceiveStatusPast != onReceiveStatusCurrent) {
-      display_nodata();
-      onReceiveStatusPast = onReceiveStatusCurrent;
-    }
-    //lora_send_char('e');
-    /*for(int i=0; i < packetSize; i++ ){                                                         // debug received data
-      Serial.print(data[i]);
-    }
-    Serial.println();*/
   }
 }
 
@@ -131,21 +130,28 @@ void update_display(float lat, float lon, float alti, int rssi, float snr) {
 }
 
 /*
- *  Function:    void lora_send_char(char data)
+ *  Function:    void lora_send_status(char data)
  *  Parameters:  String data -> a text
  *  Description: Sends a char through the LoRa system
  */
-void lora_send_char(char data) {
+void lora_send_status(char data) {
   LoRa.beginPacket();
+  LoRa.print('d');                                                                              // indentificator
   LoRa.print(data);
   LoRa.endPacket();
 }
 
 void display_nodata() {
-  u8x8.clearDisplay();                                                                        // clear the display
-  u8x8.setFont(u8x8_font_chroma48medium8_r);                                                  // set medium font  
-  u8x8.setCursor(0,0);                                                                        // cursor at the beginning
-  u8x8.print("NO DATA");                                                                      // NO DATA MAN!
+  onReceiveStatusCurrent = 1;
+  if(onReceiveStatusPast != onReceiveStatusCurrent) {
+    u8x8.clearDisplay();                                                                        // clear the display
+    u8x8.setFont(u8x8_font_chroma48medium8_r);                                                  // set medium font  
+    u8x8.setCursor(0,0);                                                                        // cursor at the beginning
+    u8x8.print("NO DATA");                                                                      // NO DATA MAN!
+    u8x8.setCursor(0,1);                                                                        // cursor at second line
+    u8x8.print("GPS not fixed");                                                                // gps not fixed
+    onReceiveStatusPast = onReceiveStatusCurrent;
+  }
 }
 
 

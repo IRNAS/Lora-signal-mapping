@@ -6,8 +6,8 @@
 float flat, flon, alti;                           // latitude, longitude and altitude for gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
-long lastSendTime = 0;        // last send time
-int interval = 500;          // interval between sends
+long lastSendTime = 0;                            // last send time
+int interval = 400;                               // interval between sends
 
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
@@ -21,12 +21,8 @@ void setup() {
     Serial.println("Starting LoRa failed!");      // did not start 
     while (1);                                    // put debug here, led or display
   }
-
-  /*LoRa.onReceive(onReceive);                      // execute on receive onReceive
-
-  LoRa.receive();                                 // put the radio into receive mode*/
   
-  delay(2000);                                     // wait for gps to stabalize
+  delay(1000);                                     // wait for gps to stabalize
 }
 
 /*
@@ -49,30 +45,28 @@ static void smartdelay(unsigned long ms)
 void gps_loop() {
   satellites = gps.satellites();                  // gets the num of satellites
 
+  if(satellites != 255) {                         // satellites return 255 when not 3d fixed
+    gps.f_get_position(&flat, &flon, &age);       // get position
+
     // debug stuff
-    //Serial.print(satellites);
-    //Serial.print("-");
-    
-    if(satellites != 0) {                           // if the satellites are not 0
-      gps.f_get_position(&flat, &flon, &age);       // get position
-
-      // debug stuff
-      Serial.print(flat, 5);
-      Serial.print("-");
-      Serial.print(flon, 5);
-      Serial.println();
+    /*Serial.print(satellites);
+    Serial.print("-");
+    Serial.print(flat, 5);
+    Serial.print("-");
+    Serial.print(flon, 5);
+    Serial.println();*/
       
-      alti = gps.f_altitude();                      // get altitude
+    alti = gps.f_altitude();                      // get altitude
   
-      send_gps(flat, flon, alti);                   // send with lora
-    } else {
-      // whoops, error!
-      Serial.print("Nothing to see here");
+    send_gps(flat, flon, alti);                   // send with lora
+  } else {
+    // whoops, error!
+    Serial.print("Nothing to see here");
       
-      lora_send_string("nothing");  
-    }
+    lora_send_char('n');  
+  }
 
-    smartdelay(1000);                               // smarty delay
+  smartdelay(1000);                               // smarty delay
 }
 
 
@@ -88,14 +82,19 @@ void loop() {
 }
 
 void onReceive(int packetSize) {
-  char data[packetSize];                                                                        // packet data           
+  if(packetSize > 0) {
+    char data[packetSize];                                                                        // packet data           
+  
+    for (int i = 0; i < packetSize; i++) {                  
+      data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
+    }
 
-  for (int i = 0; i < packetSize; i++) {                  
-    data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
-  }
-
-  for(int i=0; i< packetSize; i++) {
-    Serial.print(data[i]);
+    if(data[0] == 'd') {                                                                          // check indentifier
+      if(data[1] != 's') {                                                                        // if it hasnt succeeded
+        Serial.println("Smarty delay, returned status error");
+        smartdelay(100);                                                                          // smarty delay
+      }
+    }
   }
 }
 
@@ -115,11 +114,11 @@ void send_gps(float lat, float lon, float alti) {
 }
 
 /*
- *  Function:    void lora_send_string(String data)
- *  Parameters:  String data -> a text
- *  Description: Sends a string through the LoRa system
+ *  Function:    void lora_send_char(char data)
+ *  Parameters:  char data -> data
+ *  Description: Sends a char 'character' through the LoRa system
  */
-void lora_send_string(String data) {
+void lora_send_char(char data) {
   LoRa.beginPacket();
   LoRa.print(data);
   LoRa.endPacket();
