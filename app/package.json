@@ -1,0 +1,11 @@
+{
+  "name": "3d_lora_scanner",
+  "version": "1.0.0",
+  "description": "Gets data from arduino with lora that is receiving gps data from other lora. ",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron main.js"
+  },
+  "author": "Silard G",
+  "license": "ISC"
+}
