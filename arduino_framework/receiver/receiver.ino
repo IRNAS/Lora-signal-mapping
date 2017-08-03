@@ -12,7 +12,7 @@ void setup() {
   Serial.begin(9600);                                                                           // serial for debugging
   while (!Serial);                                                                              // waiting for serial
 
-  Serial.println("LoRa Receiver");                                                              // print welcome message
+  //Serial.println("LoRa Receiver");                                                              // print welcome message
   
   if (!LoRa.begin(866E6)) {                                                                     // LoRa setup at 868MHz
     Serial.println("Starting LoRa failed!");                                                    // failed
@@ -59,25 +59,25 @@ void onReceive(int packetSize) {
     lat = lat / 10000; lon = lon / 10000; alti = alti / 10000;                                  // divide it
 
     // debug printing with 10 decimal points
-    Serial.println(lat, 10);                                        
+    /*Serial.println(lat, 10);                                        
     Serial.println(lon, 10);
-    Serial.println(alti, 10);
+    Serial.println(alti, 10);*/
 
     
     rssi = LoRa.packetRssi();                                                                   // get rssi 
     snr  = LoRa.packetSnr();                                                                    // get snr
     
-    update_display(lat, lon, alti, rssi, snr);                                                        // update the display
+    update_display(lat, lon, alti, rssi, snr);                                                  // update the display
     
   } else {
-    u8x8.clear();                                                                               // clear the display
+    u8x8.clearDisplay();                                                                        // clear the display
     u8x8.setFont(u8x8_font_chroma48medium8_r);                                                  // set medium font  
     u8x8.setCursor(0,0);                                                                        // cursor at the beginning
     u8x8.print("NO DATA");                                                                      // NO DATA MAN!
-    for(int i=0; i < packetSize; i++ ){                                                         // debug received data
+    /*for(int i=0; i < packetSize; i++ ){                                                         // debug received data
       Serial.print(data[i]);
     }
-    Serial.println();
+    Serial.println();*/
   }
 }
 
@@ -88,7 +88,7 @@ void onReceive(int packetSize) {
 void update_display(float lat, float lon, float alti, int rssi, float snr) {
   
   u8x8.setFont(u8x8_font_chroma48medium8_r);                                                    // set font                                                                       
-  u8x8.clear();                                                                                 // clear the display
+  u8x8.clearDisplay();                                                                          // clear the display
   
   u8x8.setCursor(0,0);                                                                          // set cursor on the first row
   u8x8.print("Lat: "); u8x8.print(lat, 3);                                                      // print latitude
