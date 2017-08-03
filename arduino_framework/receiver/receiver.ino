@@ -85,11 +85,13 @@ void onReceive(int packetSize) {
     snr  = LoRa.packetSnr();                                                                    // get snr
 
     // debug printing with 10 decimal points
-    /*Serial.println(lat, 10);                                        
+    Serial.println("S");
+    Serial.println(lat, 10);                                        
     Serial.println(lon, 10);
     Serial.println(alti,10);
     Serial.println(rssi,10);
-    Serial.println(snr, 10);*/
+    Serial.println(snr, 10);
+    Serial.println("E");
 
     status_lora = 's';
     

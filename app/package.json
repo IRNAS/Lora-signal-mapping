@@ -1,11 +1,15 @@
 {
-  "name": "3d_lora_scanner",
+  "name": "3d_lora_mapper",
   "version": "1.0.0",
-  "description": "Gets data from arduino with lora that is receiving gps data from other lora. ",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "electron main.js"
+    "start": "electron main.js",
+    "install": "electron-rebuild"
   },
   "author": "Silard G",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "electron-rebuild": "^1.6.0"
+  }
 }
