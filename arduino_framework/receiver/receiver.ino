@@ -62,10 +62,6 @@ void onReceive(int packetSize) {
     Serial.println(lat, 10);                                        
     Serial.println(lon, 10);
     Serial.println(alti, 10);
-    /*for(int i=0; i < packetSize; i++ ){                                                         // debug received data
-      Serial.print(data[i]);
-    }
-    Serial.println();*/
 
     
     rssi = LoRa.packetRssi();                                                                   // get rssi 
