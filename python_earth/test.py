@@ -54,50 +54,43 @@ def main():
 
 
 	# basic default data
-	latitude = 0
-	longitude = 0
-	speed = 0
-	heading_in = 0
-	altitude = 0
-	range_gps = 1000
-	tilt = 30
+	latitude 	= 0
+	longitude 	= 0
+	speed 		= 0
+	heading_in 	= 0
+	altitude 	= 0
+	range_gps 	= 1000
+	tilt 		= 30
+	rssi 		= 0
+	snr 		= 0
 
 	while 1:
 
-		line = gps.readline()															# reading the serial
+		line 		= gps.readline()													# reading the serial
 
-		datablock = line.split(',') 													# splitt data by ','
+		datablock 	= line.split(',') 													# splitt data by ','
 		if(line):																		# if the line is not null
 
 			print(datablock);															# small debug
 			
 			latitude_in = parseStr(datablock[0])										# get latitude
-			longitude_in = parseStr(datablock[2])										# get longitude
+			longitude_in = parseStr(datablock[1])										# get longitude
 			try:
-				altitude = parseStr(datablock[5])										# get altitude
+				altitude = parseStr(datablock[2])										# get altitude
 			except ValueError:
 				# use last good value
-				altitude = altitude
-			speed_in = parseStr(datablock[4])											# get speed
-			'''if datablock[1] == 'S':	
-				latitude_in = -latitude_in
-			if datablock[3] == 'W':
-				longitude_in = -longitude_in'''
+				altitude 	= altitude
+			speed_in 		= parseStr(datablock[3])									# get speed
 
-			'''
-			latitude_degrees = int(latitude_in/100)
-			latitude_minutes = latitude_in - latitude_degrees*100
+			rssi 			= datablock[4]
+			snr 			= datablock[5]
 
-			longitude_degrees = int(longitude_in/100)
-			longitude_minutes = longitude_in - longitude_degrees*100
-			'''
+			latitude 		= latitude_in;												# reference
+			longitude 		= longitude_in;												# reference
 
-			latitude = latitude_in;														# reference
-			longitude = longitude_in;													# reference
-
-			speed = int(speed_in * 1.852)												# calculate speed
-			range_gps = ( ( speed / 100  ) * 350 ) + 650								# the range
-			tilt = ( ( speed / 120 ) * 43 ) + 30										# the speed
+			speed 			= int(speed_in * 1.852)										# calculate speed
+			range_gps 		= ( ( speed / 100  ) * 350 ) + 650							# the range
+			tilt 			= ( ( speed / 120 ) * 43 ) + 30								# the speed
 
 			# recalculate if speed is small
 			if speed < 10:

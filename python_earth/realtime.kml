@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 	<kml xmlns="http://earth.google.com/kml/2.0">
 		<Placemark>
-			<name>0 km/h</name>
+			<name>1 km/h</name>
 			<description>^</description>
 			<LookAt>
-				<longitude>19.8405246734</longitude>
-				<latitude>45.2481575012</latitude>
+				<longitude>19.8405418395</longitude>
+				<latitude>45.2481994628</latitude>
 				<range>200</range>
 				<tilt>30</tilt>
 				<heading>0</heading>
 			</LookAt>
 			<Point>
-				<coordinates>19.8405246734,45.2481575012,75.5999984741</coordinates>
+				<coordinates>19.8405418395,45.2481994628,88.5</coordinates>
 			</Point>
 		</Placemark>
 	</kml>
