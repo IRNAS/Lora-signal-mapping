@@ -8,52 +8,57 @@ import ast
 import heatmap
 import random
 
+# easier transfer from string to float
 parseStr = lambda x: x.isalpha() and x or x.isdigit() and int (x) or x.isalnum() and x or len(set(string.punctuation).intersection(x)) == 1 and x.count('.') == 1 and float(x) or x
 
+#
+#	Function:     def usage()
+#	Description:  Print the usage of this tool	
+#
 def usage():
 		print "Usage:"
 		print " -p  | --port <device>   e.g. /dev/ttyS0"
-		print " -b  | --baud <speed>    e.g. 4800"
 		print " -f  | --file <filename> e.g. /tmp/gps.kml"
 		print " -h  | --help     display options"
 		print " -sd | --sdcard   use sd card as source"
 
 def main():
-	# defaults
-	serial_port = "/dev/ttyUSB0"
-	serial_baud = 9600
-	file = 'realtime.kml'
-	sd_card = False
-	sd_card_file = "gps_data.txt"
+	serial_port = "/dev/ttyUSB0"				# default serial port
+	serial_baud = 9600							# dont change the baud!			
+	file = 'realtime.kml'						# the output file
+	sd_card = False								# without argument the sd is not executing
+	sd_card_file = "gps_data.txt"				# the sd card file that we will read
 
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "p:b:f:h:sd", ["port=", "baud=", "file=", "help", "sdcard"])
+		# the arguments
+		opts, args = getopt.getopt(sys.argv[1:], "p:f:h:sd", ["port=", "file=", "help", "sdcard"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
-	else:
-		for opt, arg in opts:
+	else:	
+		for opt, arg in opts:					# loop through the arguments
 			if opt in ("-p", "--port"):
-				serial_port = arg
-			elif opt in ("-b", "--baud"):
-				serial_baud = string.atof(arg)
+				serial_port = arg  				# set the port
 			elif opt in ("-f", "--file"):
-				file = arg
+				file = arg                      # set the output file
 			elif opt in ("-sd", "--sdcard"):
-				sd_card = True
-			elif opt in ("-h", "--help"):
-				usage()
+				sd_card = True  				# use the sd card
+			elif opt in ("-h", "--help"):         
+				usage()							# print usage
 				sys.exit(0)
 			else:
 				print "Unknown option"
 
+	# if we are not using the sd card
 	if(sd_card == False):
-		gps = serial.Serial(serial_port, serial_baud, timeout=1)
+		gps = serial.Serial(serial_port, serial_baud, timeout=1)						# open the serial 
 
-		print "Serving data from %s (%d baud) to %s" % (serial_port, serial_baud, file)
+		print "Serving data from %s (%d baud) to %s" % (serial_port, serial_baud, file) # small log
 	else:
-		print "Using SD CARD"
+		print "Using SD CARD"															# small log
+		# we will add opening the file here
 
+	# basic default data
 	latitude = 0
 	longitude = 0
 	speed = 0
@@ -63,30 +68,29 @@ def main():
 	tilt = 30
 
 	while 1:
-		if(sd_card):
+		if(sd_card):																	# if sd card than read data
 			print "read from sd card"
 			line = ""
 		else:
-			line = gps.readline()
+			line = gps.readline()														# if not sd card read gps(serial)
 
-		datablock = line.split(',') 
-		if(line):
+		datablock = line.split(',') 													# splitt data by ','
+		if(line):																		# if the line is not null
 
-			print(datablock);
+			print(datablock);															# small debug
 			
-			latitude_in = parseStr(datablock[0])
-			longitude_in = parseStr(datablock[2])
+			latitude_in = parseStr(datablock[0])										# get latitude
+			longitude_in = parseStr(datablock[2])										# get longitude
 			try:
-				altitude = parseStr(datablock[5])
+				altitude = parseStr(datablock[5])										# get altitude
 			except ValueError:
 				# use last good value
 				altitude = altitude
-			speed_in = parseStr(datablock[4])
-			heading_in = heading_in
-			if datablock[1] == 'S':
+			speed_in = parseStr(datablock[4])											# get speed
+			'''if datablock[1] == 'S':	
 				latitude_in = -latitude_in
 			if datablock[3] == 'W':
-				longitude_in = -longitude_in
+				longitude_in = -longitude_in'''
 
 			'''
 			latitude_degrees = int(latitude_in/100)
@@ -96,19 +100,20 @@ def main():
 			longitude_minutes = longitude_in - longitude_degrees*100
 			'''
 
-			latitude = latitude_in;
-			longitude = longitude_in;
+			latitude = latitude_in;														# reference
+			longitude = longitude_in;													# reference
 
-			speed = int(speed_in * 1.852)
-			range_gps = ( ( speed / 100  ) * 350 ) + 650
-			tilt = ( ( speed / 120 ) * 43 ) + 30
-			heading = heading_in
+			speed = int(speed_in * 1.852)												# calculate speed
+			range_gps = ( ( speed / 100  ) * 350 ) + 650								# the range
+			tilt = ( ( speed / 120 ) * 43 ) + 30										# the speed
 
+			# recalculate if speed is small
 			if speed < 10:
 				range_gps = 200
 				tilt = 30
 				heading = 0
 
+			# pregenerated output
 			output = """<?xml version="1.0" encoding="UTF-8"?>
 	<kml xmlns="http://earth.google.com/kml/2.0">
 		<Placemark>
@@ -127,12 +132,13 @@ def main():
 		</Placemark>
 	</kml>""" % (speed,longitude,latitude,range_gps,tilt,heading,longitude,latitude,altitude)
 
-			f=open(file, 'w')
-			f.write(output)
-			f.close()
 
-	ser.close()
+			f=open(file, 'w')				# open the file
+			f.write(output)					# write to it 
+			f.close()						# close
+
+	ser.close()								# cant leave the port open 
 	
-
+# python basics
 if __name__ == "__main__":
 	main()
