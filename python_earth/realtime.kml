@@ -4,14 +4,14 @@
 			<name>0 km/h</name>
 			<description>^</description>
 			<LookAt>
-				<longitude>19.8403568267</longitude>
-				<latitude>45.2484588623</latitude>
+				<longitude>19.8405246734</longitude>
+				<latitude>45.2481575012</latitude>
 				<range>200</range>
 				<tilt>30</tilt>
 				<heading>0</heading>
 			</LookAt>
 			<Point>
-				<coordinates>19.8403568267,45.2484588623,99.9000015258</coordinates>
+				<coordinates>19.8405246734,45.2481575012,75.5999984741</coordinates>
 			</Point>
 		</Placemark>
 	</kml>

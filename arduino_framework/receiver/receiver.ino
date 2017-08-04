@@ -62,21 +62,23 @@ void onReceive(int packetSize) {
   for (int i = 0; i < packetSize; i++) {                  
     data[i] =  ((char)LoRa.read());                                                             // put the data into the buffer
   }
-
-  /*for(int i=0; i < packetSize; i++ ){                                                           // debug received data
+/*
+  for(int i=0; i < packetSize; i++ ){                                                           // debug received data
       Serial.print(data[i]);
   }
-  Serial.println();*/
+  Serial.println();
+
+  Serial.println(data[31]);*/
 
   // if everythin is okay
-  if(data[0] == 'a' && data[10] == 'o' && data[20] == 't' && data[30] == 's') {
+  if(data[0] == 'a' && data[10] == 'o' && data[20] == 't') {
     
     char lat_char[10]; char lon_char[10]; char alti_char[10]; char speed_char[10];              // create local char arrays
     
     for(int i=1;i<10;i++)           { lat_char[i - 1]   = data[i]; }                             // write it into the local arrays
     for(int i=11;i<20;i++)          { lon_char[i - 11]  = data[i]; }                             // write it into the local arrays
-    for(int i=21;i<30;i++)          { alti_char[i - 21] = data[i]; }                                     // write into the local arrays
-    for(int i=31;i<packetSize;i++) { speed_char[i - 31] = data[i]; }
+    for(int i=21;i<30;i++)          { alti_char[i - 21] = data[i]; }                             // write into the local arrays
+    for(int i=32;i<packetSize;i++)  { speed_char[i - 32] = data[i];}
 
     lat = (float)atof(lat_char);   lon = (float)atof(lon_char); 
     alti = (float)atof(alti_char); speed = (float)atof(speed_char);                             // convert it to float
