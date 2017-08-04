@@ -41,22 +41,17 @@ def main():
 				serial_port = arg  				# set the port
 			elif opt in ("-f", "--file"):
 				file = arg                      # set the output file
-			elif opt in ("-sd", "--sdcard"):
-				sd_card = True  				# use the sd card
 			elif opt in ("-h", "--help"):         
 				usage()							# print usage
 				sys.exit(0)
 			else:
 				print "Unknown option"
 
-	# if we are not using the sd card
-	if(sd_card == False):
-		gps = serial.Serial(serial_port, serial_baud, timeout=1)						# open the serial 
 
-		print "Serving data from %s (%d baud) to %s" % (serial_port, serial_baud, file) # small log
-	else:
-		print "Using SD CARD"															# small log
-		# we will add opening the file here
+	gps = serial.Serial(serial_port, serial_baud, timeout=1)						# open the serial 
+
+	print "Serving data from %s (%d baud) to %s" % (serial_port, serial_baud, file) # small log
+
 
 	# basic default data
 	latitude = 0
@@ -68,11 +63,8 @@ def main():
 	tilt = 30
 
 	while 1:
-		if(sd_card):																	# if sd card than read data
-			print "read from sd card"
-			line = ""
-		else:
-			line = gps.readline()														# if not sd card read gps(serial)
+
+		line = gps.readline()															# reading the serial
 
 		datablock = line.split(',') 													# splitt data by ','
 		if(line):																		# if the line is not null
