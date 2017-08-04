@@ -42,8 +42,8 @@ app.once('ready', () => {
 });
 
 /*
-*	This is executing on every data that is coming in from the serial
-*/
+ *	This is executing on every data that is coming in from the serial
+ */
 parser.on('data', function(in_data) {
 
 	// compare if it is the "starting" indentificator

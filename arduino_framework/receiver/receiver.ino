@@ -56,7 +56,7 @@ void onReceive(int packetSize) {
     return;
   }
   char data[packetSize];                                                                        // packet data           
-  float lat, lon, alti;                                                                         // latitude, longitude and altitude
+  float lat, lon, alti, speed;                                                                  // latitude, longitude, altitude and speed
   int rssi; float snr;                                                                          // rssi and                                                             
   
   for (int i = 0; i < packetSize; i++) {                  
@@ -69,29 +69,37 @@ void onReceive(int packetSize) {
   Serial.println();*/
 
   // if everythin is okay
-  if(data[0] == 'a' && data[10] == 'o' && data[20] == 't') {
+  if(data[0] == 'a' && data[10] == 'o' && data[20] == 't' && data[30] == 's') {
     
-    char lat_char[10]; char lon_char[10]; char alti_char[10];                                   // create local char arrays
+    char lat_char[10]; char lon_char[10]; char alti_char[10]; char speed_char[10];              // create local char arrays
     
-    for(int i=1;i<10;i++)           { lat_char[i - 1]   = data[i];}                             // write it into the local arrays
-    for(int i=11;i<20;i++)          { lon_char[i - 11]  = data[i];}                             // write it into the local arrays
-    for(int i=21;i<packetSize; i++) { alti_char[i - 21] = data[i]; }                            // write into the local arrays
+    for(int i=1;i<10;i++)           { lat_char[i - 1]   = data[i]; }                             // write it into the local arrays
+    for(int i=11;i<20;i++)          { lon_char[i - 11]  = data[i]; }                             // write it into the local arrays
+    for(int i=21;i<30;i++)          { alti_char[i - 21] = data[i]; }                                     // write into the local arrays
+    for(int i=31;i<packetSize;i++) { speed_char[i - 31] = data[i]; }
 
-    lat = (float)atof(lat_char); lon = (float)atof(lon_char); alti = (float)atof(alti_char);    // convert it to float
-
-    lat = lat / 10000; lon = lon / 10000; alti = alti / 10000;                                  // divide it
-
+    lat = (float)atof(lat_char);   lon = (float)atof(lon_char); 
+    alti = (float)atof(alti_char); speed = (float)atof(speed_char);                             // convert it to float
+    lat = lat / 10000; lon = lon / 10000; alti = alti / 10000; speed = speed / 10000;           // divide it
     rssi = LoRa.packetRssi();                                                                   // get rssi 
     snr  = LoRa.packetSnr();                                                                    // get snr
 
     // debug printing with 10 decimal points
-    Serial.println("S");
-    Serial.println(lat, 10);                                        
-    Serial.println(lon, 10);
-    Serial.println(alti,10);
-    Serial.println(rssi,10);
-    Serial.println(snr, 10);
-    Serial.println("E");
+    Serial.print(lat, 10);
+    Serial.print(',');
+    Serial.print('0');
+    Serial.print(',');
+    Serial.print(lon, 10);
+    Serial.print(',');
+    Serial.print('0');
+    Serial.print(',');
+    Serial.print(speed, 10);
+    Serial.print(',');
+    Serial.print(alti,10);
+    Serial.println();
+   
+    /*Serial.println(rssi,10);
+    Serial.println(snr, 10);*/
 
     status_lora = 's';
     

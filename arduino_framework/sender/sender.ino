@@ -3,7 +3,7 @@
 #include <TinyGPS.h>
 #include <SoftwareSerial.h>
 
-float flat, flon, alti;                           // latitude, longitude and altitude for gps
+float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
 long lastSendTime = 0;                            // last send time
@@ -47,18 +47,22 @@ void gps_loop() {
 
   if(satellites != 255) {                         // satellites return 255 when not 3d fixed
     gps.f_get_position(&flat, &flon, &age);       // get position
-
+    speed = gps.f_speed_kmph();
+  
+    
     // debug stuff
-    /*Serial.print(satellites);
+    Serial.print(satellites);
     Serial.print("-");
     Serial.print(flat, 5);
     Serial.print("-");
     Serial.print(flon, 5);
-    Serial.println();*/
+    Serial.print("-");
+    Serial.print(speed);
+    Serial.println();
       
     alti = gps.f_altitude();                      // get altitude
   
-    send_gps(flat, flon, alti);                   // send with lora
+    send_gps(flat, flon, alti, speed);            // send with lora
   } else {
     // whoops, error!
     Serial.print("Nothing to see here");
@@ -102,7 +106,7 @@ void onReceive(int packetSize) {
  *  Function: void send_gps(float lat, float lon, float alti)
  *  Description: send lat, lon and alti through lora
  */
-void send_gps(float lat, float lon, float alti) {
+void send_gps(float lat, float lon, float alti, float speed) {
   LoRa.beginPacket();                               // begin packet
   LoRa.print('a');                                  // to spot lat beginning
   LoRa.print(lat * 10000);                          // multiply for easier transfer
@@ -110,6 +114,8 @@ void send_gps(float lat, float lon, float alti) {
   LoRa.print(lon * 10000);                          // multiply for easier transfer
   LoRa.print('t');                                  // to spot alti beginning
   LoRa.print(alti * 10000);                         // multiply for easier transfer
+  LoRa.print('s');                                  // to spot speed beginning
+  LoRa.print(speed * 10000);                        // multiply for easier transfer
   LoRa.endPacket();                                 // end packet
 }
 
