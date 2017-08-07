@@ -2,6 +2,9 @@
 #include <LoRa.h>
 #include <TinyGPS.h>
 #include <SoftwareSerial.h>
+#include <SD.h>
+
+Sd2Card card;
 
 float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
@@ -12,6 +15,8 @@ int interval = 400;                               // interval between sends
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
 
+const int chipSelect = 9;
+
 void setup() {
   
   Serial.begin(9600);                             // Serial to print out in Arduino IDE
@@ -21,6 +26,7 @@ void setup() {
     Serial.println("Starting LoRa failed!");      // did not start 
     while (1);                                    // put debug here, led or display
   }
+
   
   delay(1000);                                     // wait for gps to stabalize
 }
