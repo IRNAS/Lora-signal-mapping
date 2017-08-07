@@ -4,18 +4,18 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
-Sd2Card card;
-
 float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
 long lastSendTime = 0;                            // last send time
 int interval = 400;                               // interval between sends
 
+File rawFile;
+
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
 
-const int chipSelect = 9;
+const int chipSelect = 8;
 
 void setup() {
   
@@ -27,6 +27,16 @@ void setup() {
     while (1);                                    // put debug here, led or display
   }
 
+  if (!SD.begin(SPI_QUARTER_SPEED, chipSelect)) {
+    Serial.println("initialization failed. Things to check:");
+    Serial.println("* is a card inserted?");
+    Serial.println("* is your wiring correct?");
+    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+  } else {
+    Serial.println("Wiring is correct and a card is present.");
+  }
+
+  
   
   delay(1000);                                     // wait for gps to stabalize
 }
@@ -69,6 +79,26 @@ void gps_loop() {
     alti = gps.f_altitude();                      // get altitude
   
     send_gps(flat, flon, alti, speed);            // send with lora
+
+   
+    rawFile = SD.open("raw.txt", FILE_WRITE);
+
+    if(rawFile) {
+      rawFile.println("");
+      rawFile.print(satellites);
+      rawFile.print("-");
+      rawFile.print(flat, 10);
+      rawFile.print("-");
+      rawFile.print(flon, 10);
+      rawFile.print("-");
+      rawFile.print(speed);
+      rawFile.print("-");
+      rawFile.print(alti, 10);
+      rawFile.close();
+    } else {
+      Serial.println("ERROR CAN'T OPEN RAWFILE");
+    }
+    
   } else {
     // whoops, error!
     Serial.print("Nothing to see here");
