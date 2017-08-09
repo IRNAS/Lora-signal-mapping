@@ -4,11 +4,21 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
+#define pi 3.14159265358979323846
+
 float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
 long lastSendTime = 0;                            // last send time
 int interval = 400;                               // interval between sends
+
+long lastTimeLora = 0;
+boolean loraConnection = false;
+int speedLogger = 1;
+float speedAvg = 0;
+float tenSecDif = 0;
+
+float rec_power = 0;
 
 File file;
 String file_title = "irnas";
@@ -57,11 +67,36 @@ void setup() {
   delay(1000);                                     // wait for gps to stabalize
 }
 
+void loop() {
+  if (millis() - lastSendTime > interval) {
+    gps_loop();
+    lastSendTime = millis();            // timestamp the message
+    buttonState = digitalRead(buttonPin);
+  }
+
+  
+  check_button();
+
+  // parse for a packet, and call onReceive with the result:
+  onReceive(LoRa.parsePacket());
+
+  long currentTimeLora = millis();
+  
+  if(currentTimeLora - lastTimeLora > 10000) {
+    // we haven't received anything for more than 10 sec so there is no signal
+    loraConnection = false;
+  } else {
+    loraConnection = true;
+  }
+
+
+}
+
 void set_file_name(String title) {
   
   file_name = title + file_extension;
   
-  Serial.println("Setting title to: " + file_name);
+ // Serial.println("Setting title to: " + file_name);
 
 
   file_current_file++;
@@ -70,18 +105,18 @@ void set_file_name(String title) {
 
 void check_file() {
   if (SD.exists(file_name)) {
-    Serial.println("Excists");
+    //Serial.println("Excists");
   } else {
     Serial.println("It does not excist");
     
-    Serial.println("Creating file...");
+   // Serial.println("Creating file...");
     file = SD.open(file_name, FILE_WRITE);
     file.close();
   }
 }
 
 void destroy_file() {
-  Serial.println("Removing file");
+ // Serial.println("Removing file");
   SD.remove(file_name);
 }
 
@@ -91,10 +126,12 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
   
   buttonPressed = false;
   
-  Serial.println("writeinfo");
-
-  if(speed > 1) {
+ // Serial.println("writeinfo");
   
+//Serial.println(rec_power);
+
+  if(speed > 1 /*|| (!loraConnection && tenSecDif > 50)*/) {
+    
     file = SD.open(file_name, FILE_WRITE);
     if (header == false) { // If the header hasn't been written, write it.
       if (file) {
@@ -106,7 +143,18 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
       file.println(F("<Placemark>"));
       file.print(F("<name>"));
       file.print(speed);
+      file.print(F("km/h, rssi: "));
+      file.print(rec_power);
       file.println(F("</name>"));
+      file.print(F("<Style id=\"icon\">"));
+      file.print(F("<IconStyle>"));
+      file.print(F("<Icon>"));
+      file.print(F("<href>"));
+      file.print(get_power());
+      file.print(F("</href>"));
+      file.print(F("</Icon>"));
+      file.print(F("</IconStyle>"));
+      file.print(F("</Style>"));
       file.print(F("<Point>"));
       file.print(F("<altitude>"));
       file.print(alt, 6);
@@ -123,7 +171,7 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
 }
 
 void writeFooter() { // if the record switch is now set to off, write the kml footer, and reset the header flag
-  Serial.println("Write footer");
+  //Serial.println("Write footer");
 
   
   file = SD.open(file_name, FILE_WRITE);
@@ -138,6 +186,8 @@ void writeFooter() { // if the record switch is now set to off, write the kml fo
 
 
 void onReceive(int packetSize) {
+
+  
   if(packetSize > 0) {
     char data[packetSize];                                                                        // packet data           
   
@@ -150,7 +200,16 @@ void onReceive(int packetSize) {
         Serial.println("Smarty delay, returned status error");
         smartdelay(2000);                                                                          // smarty delay
       }
+    } else {
+      char power_char[10];
+      for(int i=0; i < packetSize; i++) {
+        power_char[i] = data[i];
+      }
+
+      rec_power = (float)atof(power_char);
+
     }
+    lastTimeLora = millis();
   }
 }
 
@@ -171,21 +230,11 @@ void send_gps(float lat, float lon, float alti, float speed) {
   LoRa.endPacket();                                 // end packet
 }
 
-/*
- *  Function:    void lora_send_char(char data)
- *  Parameters:  char data -> data
- *  Description: Sends a char 'character' through the LoRa system
- */
 void lora_send_char(char data) {
   LoRa.beginPacket();
   LoRa.print(data);
   LoRa.endPacket();
 }
-
-
-
-
-
 
 /*
  *  Function: static void smartdelay(unsigned long ms)
@@ -206,22 +255,38 @@ static void smartdelay(unsigned long ms)
 }
 
 void gps_loop() {
+  
+  
   satellites = gps.satellites();                  // gets the num of satellites
 
   if(satellites != 255) {                         // satellites return 255 when not 3d fixed
+
+    
     gps.f_get_position(&flat, &flon, &age);       // get position
-    speed = gps.f_speed_kmph();
   
+    speed = gps.f_speed_kmph();
+
+    if(speedLogger > 10) {
+      // compare speedavg
+      //Serial.print("m/10s");
+      tenSecDif = ((speedAvg / speedLogger) * 0.277778) * 7;
+      //Serial.println(tenSecDif);
+      
+      speedLogger = 1;
+      speedAvg = 0;
+    }
+
+    speedAvg = speedAvg + speed;
     
     // debug stuff
-    Serial.print(satellites);
+  /*  Serial.print(satellites);
     Serial.print("-");
     Serial.print(flat, 5);
     Serial.print("-");
     Serial.print(flon, 5);
     Serial.print("-");
     Serial.print(speed);
-    Serial.println();
+    Serial.println();*/
       
     alti = gps.f_altitude();                      // get altitude
   
@@ -229,6 +294,7 @@ void gps_loop() {
 
     writeInfo(speed, flat, flon, alti);
 
+    speedLogger++;
    
   } else {
     
@@ -242,26 +308,12 @@ void gps_loop() {
 }
 
 
-void loop() {
-  if (millis() - lastSendTime > interval) {
-    gps_loop();
-    lastSendTime = millis();            // timestamp the message
-    buttonState = digitalRead(buttonPin);
-  }
 
-  
-  check_button();
-
-  // parse for a packet, and call onReceive with the result:
-  onReceive(LoRa.parsePacket());
-
-
-}
 
 void check_button() {
    if(!buttonPressed) {
       if (buttonState == HIGH) {
-        Serial.println("BUTTON!");
+        //Serial.println("BUTTON!");
         digitalWrite(6, HIGH);
         buttonPressed = true;
         writeFooter();
@@ -277,4 +329,34 @@ void check_button() {
     
     }
 }
+
+String get_power() {
+ 
+
+  if(rec_power <= -95) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon17.png");
+  } else if(rec_power >= -94 && rec_power <= -90) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon16.png");
+  } else if(rec_power >= -89 && rec_power <= -85) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon15.png");
+  } else if(rec_power >= -84 && rec_power <= -75) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon14.png");
+  } else if(rec_power >= -74 && rec_power <= -65) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon13.png");
+  } else if(rec_power >= -64 && rec_power <= -55) {
+    return F("http://maps.google.com/mapfiles/kml/pal3/icon12.png");
+  } else {
+    return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");
+  }
+  /*if(rec_power <= -81) {
+        //good
+        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon17.png"));
+      } else if(rec_power >= -80 && rec_power <= -75) {
+        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon16.png"));
+      } else if(rec_power >= -75 && rec_power <= -70) {
+        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon15.png"));
+      }
+      */
+}
+
 
