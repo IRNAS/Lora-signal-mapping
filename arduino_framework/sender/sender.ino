@@ -148,7 +148,7 @@ void onReceive(int packetSize) {
     if(data[0] == 'd') {                                                                          // check indentifier
       if(data[1] != 's') {                                                                        // if it hasnt succeeded
         Serial.println("Smarty delay, returned status error");
-        smartdelay(100);                                                                          // smarty delay
+        smartdelay(2000);                                                                          // smarty delay
       }
     }
   }

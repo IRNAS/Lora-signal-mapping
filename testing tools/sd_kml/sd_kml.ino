@@ -28,7 +28,6 @@ int file_current_file = 1;
 
 
 boolean header = false;            // Has the header been written?
-boolean footer = false;
 const int buttonPin = 7;     // the number of the pushbutton pin
 boolean buttonPressed = false;
 
