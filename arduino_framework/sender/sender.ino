@@ -4,13 +4,13 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
-#define pi 3.14159265358979323846
+#define BETWEEN(value, max, min) (value < max && value > min)
 
 float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
 int satellites;                                   // num of satellites
 long lastSendTime = 0;                            // last send time
-int interval = 400;                               // interval between sends
+int interval = 200;                               // interval between sends
 
 long lastTimeLora = 0;
 boolean loraConnection = false;
@@ -28,8 +28,7 @@ int file_current_file = 1;
 
 boolean header = false;            
 const int buttonPin = 7;     
-boolean buttonPressed = false;
-int buttonState = 0;         
+int buttonState = false;         
 
 TinyGPS gps;
 SoftwareSerial ss(3, 4); // Arduino RX, TX , 
@@ -67,11 +66,28 @@ void setup() {
   delay(1000);                                     // wait for gps to stabalize
 }
 
+
 void loop() {
+
+  
+  check_button();
+
   if (millis() - lastSendTime > interval) {
+    
+    check_button();
     gps_loop();
+    
+    long currentTimeLora = millis();
+  
+    if(currentTimeLora - lastTimeLora > 5000) {
+      // we haven't received anything for more than 10 sec so there is no signal
+      loraConnection = false;
+    } else {
+      loraConnection = true;
+      
+    }
     lastSendTime = millis();            // timestamp the message
-    buttonState = digitalRead(buttonPin);
+    
   }
 
   
@@ -80,14 +96,7 @@ void loop() {
   // parse for a packet, and call onReceive with the result:
   onReceive(LoRa.parsePacket());
 
-  long currentTimeLora = millis();
-  
-  if(currentTimeLora - lastTimeLora > 10000) {
-    // we haven't received anything for more than 10 sec so there is no signal
-    loraConnection = false;
-  } else {
-    loraConnection = true;
-  }
+  check_button();
 
 
 }
@@ -107,7 +116,7 @@ void check_file() {
   if (SD.exists(file_name)) {
     //Serial.println("Excists");
   } else {
-    Serial.println("It does not excist");
+    //Serial.println("It does not excist");
     
    // Serial.println("Creating file...");
     file = SD.open(file_name, FILE_WRITE);
@@ -124,7 +133,6 @@ void destroy_file() {
 void writeInfo(float speed, float lon, float lat, float alt) { //Write the data to the SD card fomratted for google earth kml
 
   
-  buttonPressed = false;
   
  // Serial.println("writeinfo");
   
@@ -146,7 +154,7 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
       file.print(F("km/h, rssi: "));
       file.print(rec_power);
       file.println(F("</name>"));
-      file.print(F("<Style id=\"icon\">"));
+      file.print(F("<Style id=\"normalPlacemark\">"));
       file.print(F("<IconStyle>"));
       file.print(F("<Icon>"));
       file.print(F("<href>"));
@@ -167,6 +175,8 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
       file.println(F("</Point></Placemark>"));
       file.close(); // close the file:
     }
+
+    file.close();
   }
 }
 
@@ -180,13 +190,16 @@ void writeFooter() { // if the record switch is now set to off, write the kml fo
   if (file) {
     file.println(F("</Document>"));
     file.println (F("</kml>"));
-    file.close ();
+    file.close();
   }
-}
 
+  file.close();
+}
 
 void onReceive(int packetSize) {
 
+  
+  loraConnection = true;
   
   if(packetSize > 0) {
     char data[packetSize];                                                                        // packet data           
@@ -197,8 +210,10 @@ void onReceive(int packetSize) {
 
     if(data[0] == 'd') {                                                                          // check indentifier
       if(data[1] != 's') {                                                                        // if it hasnt succeeded
-        Serial.println("Smarty delay, returned status error");
-        smartdelay(2000);                                                                          // smarty delay
+        //Serial.println("Smarty delay, returned status error");
+        gps_loop();
+        //smartdelay(4000);                                                                          // smarty delay
+        //gps_loop();
       }
     } else {
       char power_char[10];
@@ -209,8 +224,12 @@ void onReceive(int packetSize) {
       rec_power = (float)atof(power_char);
 
     }
-    lastTimeLora = millis();
+    
+  } else {
+    loraConnection = false;
   }
+
+  lastTimeLora = millis();
 }
 
 /*
@@ -218,6 +237,8 @@ void onReceive(int packetSize) {
  *  Description: send lat, lon and alti through lora
  */
 void send_gps(float lat, float lon, float alti, float speed) {
+  loraConnection = true;
+  
   LoRa.beginPacket();                               // begin packet
   LoRa.print('a');                                  // to spot lat beginning
   LoRa.print(lat * 10000);                          // multiply for easier transfer
@@ -254,8 +275,9 @@ static void smartdelay(unsigned long ms)
   } while (millis() - start < ms);
 }
 
+
+
 void gps_loop() {
-  
   
   satellites = gps.satellites();                  // gets the num of satellites
 
@@ -311,52 +333,60 @@ void gps_loop() {
 
 
 void check_button() {
-   if(!buttonPressed) {
-      if (buttonState == HIGH) {
-        //Serial.println("BUTTON!");
-        digitalWrite(6, HIGH);
-        buttonPressed = true;
-        writeFooter();
-
-        set_file_name(file_title + file_current_file);
-        destroy_file();
-        check_file();
-        _delay_ms(5000);
-        buttonPressed = false;
-        digitalWrite(6, LOW);
-        
-      }
-    
+  
+  buttonState = digitalRead(buttonPin);
+  
+  if (buttonState == HIGH) {    
+    //Serial.println("BUTTON!");
+    digitalWrite(6, HIGH);
+    writeFooter();
+    delay(1000);
+    while(file) {
+      file.close();
     }
+    delay(1000);    
+    set_file_name(file_title + file_current_file);
+    destroy_file();
+    check_file();
+    delay(1000);
+    digitalWrite(6, LOW);
+    for(int i=1; i< file_current_file; i++) {
+      digitalWrite(6, HIGH);
+      delay(300);
+      digitalWrite(6, LOW);
+      delay(300);      
+    }
+  }
+
+   
 }
 
 String get_power() {
- 
-
-  if(rec_power <= -95) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon17.png");
-  } else if(rec_power >= -94 && rec_power <= -90) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon16.png");
-  } else if(rec_power >= -89 && rec_power <= -85) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon15.png");
-  } else if(rec_power >= -84 && rec_power <= -75) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon14.png");
-  } else if(rec_power >= -74 && rec_power <= -65) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon13.png");
-  } else if(rec_power >= -64 && rec_power <= -55) {
-    return F("http://maps.google.com/mapfiles/kml/pal3/icon12.png");
+  if(loraConnection == true) {
+    if(rec_power > -50) {
+      if(rec_power == 0) {
+        return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");
+      } else {
+        return F("http://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png");
+      }
+    } else if(BETWEEN(rec_power, -50, -80)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png");
+    } else if(BETWEEN(rec_power, -80, -100)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png");
+    } else if(BETWEEN(rec_power, -100, -105)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png");//eh orange
+    } else if(BETWEEN(rec_power, -105, -110)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png");
+    } else if(BETWEEN(rec_power, -110, -115)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png");
+    } else if(BETWEEN(rec_power, -115, -120)) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/ltblu-pushpin.png");
+    } else if(rec_power < -120) {
+      return F("http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png");
+    } 
   } else {
     return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");
   }
-  /*if(rec_power <= -81) {
-        //good
-        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon17.png"));
-      } else if(rec_power >= -80 && rec_power <= -75) {
-        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon16.png"));
-      } else if(rec_power >= -75 && rec_power <= -70) {
-        file.print(F("http://maps.google.com/mapfiles/kml/pal3/icon15.png"));
-      }
-      */
 }
 
 
