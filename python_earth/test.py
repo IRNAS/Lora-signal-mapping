@@ -109,6 +109,7 @@ def main():
 				<heading>%s</heading>
 			</LookAt>
 			<Point>
+				<altitudeMode>relativeToGround</altitudeMode>
 				<coordinates>%s,%s,%s</coordinates>
 			</Point>
 		</Placemark>
