@@ -206,9 +206,9 @@ void writeFooter() {
     file.println(F("</Document>"));
     file.println (F("</kml>"));
     file.close();
+  } else {
+    Serial.println("Can't open file, what?");
   }
-
-  file.close();
 }
 
 /*
