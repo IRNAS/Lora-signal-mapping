@@ -12,28 +12,28 @@ int satellites;                                   // num of satellites
 long lastSendTime = 0;                            // last send time
 int interval = 200;                               // interval between sends
 
-long lastTimeLora = 0;
-boolean loraConnection = false;
-int speedLogger = 1;
-float speedAvg = 0;
-float tenSecDif = 0;
+long lastTimeLora = 0;                            // last millis we received from lora
+boolean loraConnection = false;                   // current lora connection
+int speedLogger = 1;                              // speed logger counter
+float speedAvg = 0;                               // avg speed
+float tenSecDif = 0;                              // ten sec difference counter
 
-float rec_power = 0;
+float rec_power = 0;                              // receiver power
 
-File file;
-String file_title = "irnas";
-String file_extension = ".kml";
-String file_name = file_title + file_extension;
-int file_current_file = 1;
+File file;                                        // file object for sd
+String file_title = "irnas";                      // always the file title
+String file_extension = ".kml";                   // .kml is the file
+String file_name = file_title + file_extension;   // the file name structure
+int file_current_file = 1;                        // the current file number count
+const int chipSelect = 8;                         // chip select for the sd card
 
-boolean header = false;            
-const int buttonPin = 7;     
-int buttonState = false;         
+boolean header = false;                           // header boolean for checking if we need header
+const int buttonPin = 7;                          // button pin
+int buttonState = false;                          // the state of the pin
 
-TinyGPS gps;
-SoftwareSerial ss(3, 4); // Arduino RX, TX , 
+TinyGPS gps;                                      // object for the gps
+SoftwareSerial ss(3, 4); // Arduino RX, TX ,      // serial for the gps
 
-const int chipSelect = 8;
 
 void setup() {
   
@@ -45,39 +45,43 @@ void setup() {
     while (1);                                    // put debug here, led or display
   }
 
-  pinMode(buttonPin, INPUT);
-  pinMode(6, OUTPUT);
+  pinMode(buttonPin, INPUT);                      // button input
+  pinMode(6, OUTPUT);                             // led ouput
 
-  if (!SD.begin(SPI_QUARTER_SPEED, 8)) {
-    Serial.println("initialization failed!");
-    for(int i=0; i < 10; i++) {
+  if (!SD.begin(SPI_QUARTER_SPEED, 8)) {          // spi quarter speed because too fast
+    Serial.println("initialization failed!");     // failed
+
+    // let the people know
+    for(int i=0; i < 10; i++) { 
       digitalWrite(6, HIGH);
       delay(100);
       digitalWrite(6, LOW);
       delay(100);
     }
+  } else {
+    Serial.println("initialization done.");
   }
-  Serial.println("initialization done.");
-
-  set_file_name(file_title + file_current_file);
-  destroy_file();
-  check_file();
   
-  delay(1000);                                     // wait for gps to stabalize
+  set_file_name(file_title + file_current_file);  // set the file name (actually already set :P)
+  destroy_file();                                 // destroy the file to make sure that in the next step we have an empty one
+  check_file();                                   // create an empty file
+  
+  delay(1000);                                    // wait for gps to stabalize
 }
 
 
 void loop() {
 
   
-  check_button();
+  check_button();                                 // check state of the button
 
+  // every interval (200ms)
   if (millis() - lastSendTime > interval) {
     
-    check_button();
-    gps_loop();
+    check_button();                               // check button (again)
+    gps_loop();                                   // do gps
     
-    long currentTimeLora = millis();
+    long currentTimeLora = millis();              // current time for lora compare
   
     if(currentTimeLora - lastTimeLora > 5000) {
       // we haven't received anything for more than 10 sec so there is no signal
@@ -86,21 +90,27 @@ void loop() {
       loraConnection = true;
       
     }
+    
     lastSendTime = millis();            // timestamp the message
     
   }
 
   
-  check_button();
+  check_button();                               // again check button
 
   // parse for a packet, and call onReceive with the result:
   onReceive(LoRa.parsePacket());
 
-  check_button();
+  check_button();                               // and again
 
+  //! we are checking button so many times because all the interrupt pins are taken by the gps/lora hat
 
 }
 
+/*
+ *  Function: void set_file_name(String title) 
+ *  Description: Set the file name and increment file counter
+ */
 void set_file_name(String title) {
   
   file_name = title + file_extension;
@@ -111,7 +121,10 @@ void set_file_name(String title) {
   file_current_file++;
 }
 
-
+/*
+ *  Function: void check_file()
+ *  Description: Check if file excists if not create new one
+ */
 void check_file() {
   if (SD.exists(file_name)) {
     //Serial.println("Excists");
@@ -124,34 +137,34 @@ void check_file() {
   }
 }
 
+/*
+ *  Function: void destroy_file()
+ *  Description: just destroys it without question
+ */
 void destroy_file() {
  // Serial.println("Removing file");
   SD.remove(file_name);
 }
 
-
-void writeInfo(float speed, float lon, float lat, float alt) { //Write the data to the SD card fomratted for google earth kml
-
-  
-  
- // Serial.println("writeinfo");
-  
-//Serial.println(rec_power);
-
+/*
+ *  Function: void writeInfo(float speed, float lon, float lat, float alt)
+ *  Description: write the data to the SD card fomratted for google earth kml
+ */
+void writeInfo(float speed, float lon, float lat, float alt) { 
+ 
+  // onyl log if speed is above 1
   if(speed > 1 /*|| (!loraConnection && tenSecDif > 50)*/) {
     
-    file = SD.open(file_name, FILE_WRITE);
-    if (header == false) { // If the header hasn't been written, write it.
+    file = SD.open(file_name, FILE_WRITE);                                          // open file
+    if (header == false) {                                                          // If the header hasn't been written, write it.
       if (file) {
         file.print(F("<?xml version=\"1.0\" encoding=\"UTF-8\"?> <kml xmlns=\"http://earth.google.com/kml/2.0\"> <Document>"));
-        header = true; // header flag set.
+        header = true;                                                              // header flag set.
       }
     }
-    if (file) { // write current GPS position data as KML
+    if (file) {                                                                     // write current GPS position data as KML
       file.println(F("<Placemark>"));
       file.print(F("<name>"));
-      file.print(speed);
-      file.print(F("km/h, rssi: "));
       file.print(rec_power);
       file.println(F("</name>"));
       file.print(F("<Style id=\"normalPlacemark\">"));
@@ -164,13 +177,13 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
       file.print(F("</IconStyle>"));
       file.print(F("</Style>"));
       file.print(F("<Point>"));
-      file.print(F("<altitude>"));
-      file.print(alt, 6);
-      file.print(F("</altitude>"));
+      file.print(F("<altitudeMode>relativeToGround</altitudeMode>"));
       file.print(F("<coordinates>"));
       file.print(lat, 6);
       file.print(F(","));
       file.print(lon, 6);
+      file.print(F(","));
+      file.print(alt, 6);
       file.print(F("</coordinates>"));
       file.println(F("</Point></Placemark>"));
       file.close(); // close the file:
@@ -180,14 +193,16 @@ void writeInfo(float speed, float lon, float lat, float alt) { //Write the data 
   }
 }
 
-void writeFooter() { // if the record switch is now set to off, write the kml footer, and reset the header flag
-  //Serial.println("Write footer");
+/*
+ *  Function: void writeFooter()
+ *  Description: if the record switch is now set to off, write the kml footer, and reset the header flag
+ */
+void writeFooter() {
 
+  file = SD.open(file_name, FILE_WRITE);            // open the file
+  header = false;                                   // set header to false
   
-  file = SD.open(file_name, FILE_WRITE);
-  header = false;
-  
-  if (file) {
+  if (file) {                                       // if actually opened the file... print 
     file.println(F("</Document>"));
     file.println (F("</kml>"));
     file.close();
@@ -196,10 +211,14 @@ void writeFooter() { // if the record switch is now set to off, write the kml fo
   file.close();
 }
 
+/*
+ *  Function: void onReceive(int packetSize) 
+ *  Description: receive interrupt function 
+ */
 void onReceive(int packetSize) {
 
   
-  loraConnection = true;
+  loraConnection = true;                                                                          // if we got something than we def have a connection
   
   if(packetSize > 0) {
     char data[packetSize];                                                                        // packet data           
@@ -215,21 +234,21 @@ void onReceive(int packetSize) {
         //smartdelay(4000);                                                                          // smarty delay
         //gps_loop();
       }
-    } else {
+    } else {                                                                                      // we have gotten other data (power)
       char power_char[10];
       for(int i=0; i < packetSize; i++) {
-        power_char[i] = data[i];
+        power_char[i] = data[i];                                                                  // write it to the power char array
       }
 
-      rec_power = (float)atof(power_char);
+      rec_power = (float)atof(power_char);                                                        // convert it to be useful
 
     }
     
   } else {
-    loraConnection = false;
+    loraConnection = false;                                                                       // if nothing arrived we model it as connection is false
   }
 
-  lastTimeLora = millis();
+  lastTimeLora = millis();                                                                        // set last time lora
 }
 
 /*
@@ -251,6 +270,10 @@ void send_gps(float lat, float lon, float alti, float speed) {
   LoRa.endPacket();                                 // end packet
 }
 
+/*
+ *  Function: void lora_send_char(char data)
+ *  Description: Send char data through lora
+ */
 void lora_send_char(char data) {
   LoRa.beginPacket();
   LoRa.print(data);
@@ -275,8 +298,10 @@ static void smartdelay(unsigned long ms)
   } while (millis() - start < ms);
 }
 
-
-
+/*
+ *  Function: void gps_loop()
+ *  Description: the gps loop that does all the work with gps and lora
+ */
 void gps_loop() {
   
   satellites = gps.satellites();                  // gets the num of satellites
@@ -286,19 +311,19 @@ void gps_loop() {
     
     gps.f_get_position(&flat, &flon, &age);       // get position
   
-    speed = gps.f_speed_kmph();
+    speed = gps.f_speed_kmph();                   // get speed
 
-    if(speedLogger > 10) {
+    if(speedLogger > 10) {                        // speed logger counter is above 10
       // compare speedavg
       //Serial.print("m/10s");
-      tenSecDif = ((speedAvg / speedLogger) * 0.277778) * 7;
+      tenSecDif = ((speedAvg / speedLogger) * 0.277778) * 7;  // calculate tensecdif (ten second difference)
       //Serial.println(tenSecDif);
       
-      speedLogger = 1;
-      speedAvg = 0;
+      speedLogger = 1;                            // reset logger
+      speedAvg = 0;                               // reset avg
     }
 
-    speedAvg = speedAvg + speed;
+    speedAvg = speedAvg + speed;                  // add up the speed
     
     // debug stuff
   /*  Serial.print(satellites);
@@ -314,10 +339,10 @@ void gps_loop() {
   
     send_gps(flat, flon, alti, speed);            // send with lora
 
-    writeInfo(speed, flat, flon, alti);
+    writeInfo(speed, flat, flon, alti);           // write to sd
 
-    speedLogger++;
-   
+    speedLogger++;                                // speed logger counter
+    
   } else {
     
     // whoops, error!
@@ -329,9 +354,10 @@ void gps_loop() {
   smartdelay(1000);                               // smarty delay
 }
 
-
-
-
+/*
+ *  Function: void check_button()
+ *  Descritpion: check the button and if high state than write footer and create new file
+ */
 void check_button() {
   
   buttonState = digitalRead(buttonPin);

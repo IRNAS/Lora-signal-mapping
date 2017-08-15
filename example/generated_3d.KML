@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?> <kml xmlns="http://earth.google.com/kml/2.0"> <Document><Placemark>
+<name>-62.00</name>
+<Style id="normalPlacemark"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png</href></Icon></IconStyle></Style><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>19.840711,45.248695,111.300003</coordinates></Point></Placemark>
+<Placemark>
+<name>-59.00</name>
+<Style id="normalPlacemark"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png</href></Icon></IconStyle></Style><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>19.840370,45.248550,111.099998</coordinates></Point></Placemark>
+<Placemark>
+<name>-59.00</name>
+<Style id="normalPlacemark"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png</href></Icon></IconStyle></Style><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>19.840269,45.248512,109.699996</coordinates></Point></Placemark>
+<Placemark>
+<name>-60.00</name>
+<Style id="normalPlacemark"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png</href></Icon></IconStyle></Style><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>19.840223,45.248447,107.599998</coordinates></Point></Placemark>
+<Placemark>
+<name>-60.00</name>
+<Style id="normalPlacemark"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png</href></Icon></IconStyle></Style><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>19.840208,45.248447,107.400001</coordinates></Point></Placemark>
+</Document>
+</kml>

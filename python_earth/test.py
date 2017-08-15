@@ -20,18 +20,15 @@ def usage():
 		print " -p  | --port <device>   e.g. /dev/ttyS0"
 		print " -f  | --file <filename> e.g. /tmp/gps.kml"
 		print " -h  | --help     display options"
-		print " -sd | --sdcard   use sd card as source"
-
 def main():
-	serial_port = "/dev/ttyUSB0"				# default serial port
-	serial_baud = 9600							# dont change the baud!			
-	file = 'realtime.kml'						# the output file
-	sd_card = False								# without argument the sd is not executing
-	sd_card_file = "gps_data.txt"				# the sd card file that we will read
+	serial_port		= "/dev/ttyUSB0"				# default serial port
+	serial_baud 	= 9600							# dont change the baud!			
+	file 			= 'realtime.kml'				# the output file
+	convert_3d 		= False
 
 	try:
 		# the arguments
-		opts, args = getopt.getopt(sys.argv[1:], "p:f:h:sd", ["port=", "file=", "help", "sdcard"])
+		opts, args = getopt.getopt(sys.argv[1:], "p:f:h:", ["port=", "file=", "help"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(1)
@@ -44,9 +41,9 @@ def main():
 			elif opt in ("-h", "--help"):         
 				usage()							# print usage
 				sys.exit(0)
+			
 			else:
 				print "Unknown option"
-
 
 	gps = serial.Serial(serial_port, serial_baud, timeout=1)						# open the serial 
 
@@ -123,7 +120,7 @@ def main():
 			f.close()						# close
 
 	ser.close()								# cant leave the port open 
-	
+
 # python basics
 if __name__ == "__main__":
 	main()
