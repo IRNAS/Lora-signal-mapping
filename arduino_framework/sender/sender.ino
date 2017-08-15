@@ -4,7 +4,7 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
-#define BETWEEN(value, max, min) (value < max && value > min)
+#define BETWEEN(value, max, min) (value < max && value > min)   // making it easier to find between values
 
 float flat, flon, alti, speed;                    // latitude, longitude, altitude and speedfor gps
 unsigned long age;                                // age for gps
@@ -91,17 +91,17 @@ void loop() {
       
     }
     
-    lastSendTime = millis();            // timestamp the message
+    lastSendTime = millis();                      // timestamp the message
     
   }
 
   
-  check_button();                               // again check button
+  check_button();                                 // again check button
 
   // parse for a packet, and call onReceive with the result:
   onReceive(LoRa.parsePacket());
 
-  check_button();                               // and again
+  check_button();                                 // and again
 
   //! we are checking button so many times because all the interrupt pins are taken by the gps/lora hat
 
@@ -165,13 +165,13 @@ void writeInfo(float speed, float lon, float lat, float alt) {
     if (file) {                                                                     // write current GPS position data as KML
       file.println(F("<Placemark>"));
       file.print(F("<name>"));
-      file.print(rec_power);
+      file.print(rec_power);                                                        // receive powe ris the name
       file.println(F("</name>"));
       file.print(F("<Style id=\"normalPlacemark\">"));
       file.print(F("<IconStyle>"));
       file.print(F("<Icon>"));
       file.print(F("<href>"));
-      file.print(get_power());
+      file.print(get_power());                                                      // icon is the power
       file.print(F("</href>"));
       file.print(F("</Icon>"));
       file.print(F("</IconStyle>"));
@@ -179,17 +179,17 @@ void writeInfo(float speed, float lon, float lat, float alt) {
       file.print(F("<Point>"));
       file.print(F("<altitudeMode>relativeToGround</altitudeMode>"));
       file.print(F("<coordinates>"));
-      file.print(lat, 6);
+      file.print(lat, 6);                                                           // latitude
       file.print(F(","));
-      file.print(lon, 6);
+      file.print(lon, 6);                                                           // longitude
       file.print(F(","));
-      file.print(alt, 6);
+      file.print(alt, 6);                                                           // altitude
       file.print(F("</coordinates>"));
       file.println(F("</Point></Placemark>"));
       file.close(); // close the file:
     }
 
-    file.close();
+    file.close();                                                                   // close file
   }
 }
 
@@ -360,22 +360,24 @@ void gps_loop() {
  */
 void check_button() {
   
-  buttonState = digitalRead(buttonPin);
+  buttonState = digitalRead(buttonPin);                 // get the state of the button
   
-  if (buttonState == HIGH) {    
+  if (buttonState == HIGH) {                            // if the button is high
     //Serial.println("BUTTON!");
-    digitalWrite(6, HIGH);
-    writeFooter();
-    delay(1000);
-    while(file) {
+    digitalWrite(6, HIGH);                              // led on
+    writeFooter();                                      // write footer
+    delay(1000);                                        // wait a second
+    while(file) {                                       // while the file is here close it
       file.close();
-    }
+    } 
     delay(1000);    
-    set_file_name(file_title + file_current_file);
-    destroy_file();
-    check_file();
-    delay(1000);
-    digitalWrite(6, LOW);
+    set_file_name(file_title + file_current_file);      // set new name
+    destroy_file();                                     // destroy if it is avaible
+    check_file();                                       // check file and create new
+    delay(1000);                    
+    digitalWrite(6, LOW);                               // led low
+
+    // show how many files are there
     for(int i=1; i< file_current_file; i++) {
       digitalWrite(6, HIGH);
       delay(300);
@@ -387,31 +389,35 @@ void check_button() {
    
 }
 
+/*
+ *  Function: String get_power()
+ *  Description: returns a string that is the url to the power indicator
+ */
 String get_power() {
-  if(loraConnection == true) {
-    if(rec_power > -50) {
-      if(rec_power == 0) {
-        return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");
+  if(loraConnection == true) {                                                              // do all of it if there is a lora connection
+    if(rec_power > -50) {                                                                   // power lower than -50 
+      if(rec_power == 0) {                                                                  // if 0 than that means that there is no lora connection
+        return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");                 // return caution sign
       } else {
-        return F("http://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png");
+        return F("http://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png");            // very good connection white one
       }
     } else if(BETWEEN(rec_power, -50, -80)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/pink-pushpin.png");             // between -50 and -80 pink pin
     } else if(BETWEEN(rec_power, -80, -100)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png");           // between -80 and -100 purple pin
     } else if(BETWEEN(rec_power, -100, -105)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png");//eh orange
+      return F("http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png");              // between -100 and -105 red one (orange)
     } else if(BETWEEN(rec_power, -105, -110)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png");              // between -105 and -110 yellow pin
     } else if(BETWEEN(rec_power, -110, -115)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/grn-pushpin.png");              // between -110 and -115 green pin
     } else if(BETWEEN(rec_power, -115, -120)) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/ltblu-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/ltblu-pushpin.png");            // between -115 and -120 light blue pin
     } else if(rec_power < -120) {
-      return F("http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png");
+      return F("http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png");             // under -120 blue one
     } 
-  } else {
-    return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");
+  } else {  
+    return F("http://maps.google.com/mapfiles/kml/shapes/caution.png");                     // no connection caution!
   }
 }
 
