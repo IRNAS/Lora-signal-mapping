@@ -58,6 +58,7 @@ void setup() {
       digitalWrite(6, LOW);
       delay(100);
     }
+    
   } else {
     Serial.println("initialization done.");
   }
@@ -188,8 +189,6 @@ void writeInfo(float speed, float lon, float lat, float alt) {
       file.println(F("</Point></Placemark>"));
       file.close(); // close the file:
     }
-
-    file.close();                                                                   // close file
   }
 }
 
