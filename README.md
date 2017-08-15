@@ -1,6 +1,6 @@
-# LoRa
+# LoRa Signal Mapping
 
-This project is designed to help find the best signal strength between two LoRa devices and log the GPS coordinates in 3D.
+This project is designed to map the signal strength between two LoRa devices and log the GPS coordinates in 3D.
 
 The project is divided between three hardware parts
  - sender
@@ -28,7 +28,7 @@ The hardware consists of:
 ![N|Solid](https://raw.githubusercontent.com/IRNAS/Lora-signal-mapping/master/images/sender_setup.jpg)
 
 ### Software
-The software is written in C in the Arduino IDE.
+The software is written in C/C++ in the Arduino IDE.
 
 It is divided into 3 parts. ***LoRa***, ***GPS*** and ***SD Card***
 #### LoRa
